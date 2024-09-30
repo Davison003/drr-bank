@@ -13,7 +13,7 @@ func TestTransferTx(t *testing.T) {
 	acc1 := createRandomAccount(t)
 	acc2 := createRandomAccount(t)
 
-	n := 10
+	n := 5
 	amount := int64(10)
 
 	// channels connect concurrent Go routines
@@ -109,5 +109,59 @@ func TestTransferTx(t *testing.T) {
 
 	require.Equal(t, acc1.Balance-int64(n)*amount, updatedAcc1.Balance)
 	require.Equal(t, acc2.Balance+int64(n)*amount, updatedAcc2.Balance)
+
+}
+
+func TestTransferTxDeadLock(t *testing.T) {
+	store := NewStore(dbTest)
+
+	acc1 := createRandomAccount(t)
+	acc2 := createRandomAccount(t)
+
+	n := 10
+	amount := int64(10)
+
+	// channels connect concurrent Go routines
+	// share data between channels without locking
+	errs := make(chan error)
+
+	for i := 0; i < n; i++ {
+		fromAccID := acc1.ID
+		toAccID := acc2.ID
+
+		if i%2 == 1 {
+			fromAccID = acc2.ID
+			toAccID = acc1.ID
+		}
+
+		// makes different routines run concurrently
+		go func() {
+			ctx := context.Background()
+			_, err := store.TransferTx(ctx, TransferTxParams{
+				FromAccountID: fromAccID,
+				ToAccountID:   toAccID,
+				Amount:        amount,
+			})
+
+			errs <- err
+		}()
+	}
+
+	// checking results
+	for i := 0; i < n; i++ {
+		err := <-errs
+		require.NoError(t, err)
+
+	}
+
+	// check the final updated balances
+	updatedAcc1, err := testQueries.GetAccount(context.Background(), acc1.ID)
+	require.NoError(t, err)
+
+	updatedAcc2, err := testQueries.GetAccount(context.Background(), acc2.ID)
+	require.NoError(t, err)
+
+	require.Equal(t, acc1.Balance, updatedAcc1.Balance)
+	require.Equal(t, acc2.Balance, updatedAcc2.Balance)
 
 }

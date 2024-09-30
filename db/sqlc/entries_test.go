@@ -14,7 +14,7 @@ var acc Account
 func createRandomEntry(t *testing.T, accounts ...Account) Entry {
 	if len(accounts) == 0 {
 		acc = createRandomAccount(t)
-	}else {
+	} else {
 		acc = accounts[0]
 	}
 
@@ -22,7 +22,7 @@ func createRandomEntry(t *testing.T, accounts ...Account) Entry {
 
 	arg := CreateEntryParams{
 		AccountID: acc.ID,
-		Amount: randAmount,
+		Amount:    randAmount,
 	}
 
 	entry, err := testQueries.CreateEntry(context.Background(), arg)
@@ -31,17 +31,17 @@ func createRandomEntry(t *testing.T, accounts ...Account) Entry {
 	require.NotEmpty(t, entry)
 
 	argAcc := UpdateAccountParams{
-		ID: acc.ID,
+		ID:      acc.ID,
 		Balance: acc.Balance + randAmount,
 	}
 
-	errAcc := testQueries.UpdateAccount(context.Background(), argAcc)
+	_, errAcc := testQueries.UpdateAccount(context.Background(), argAcc)
 	require.NoError(t, errAcc)
 
 	return entry
 }
 
-func TestCreateEntry(t *testing.T){
+func TestCreateEntry(t *testing.T) {
 	createRandomEntry(t)
 }
 
@@ -68,8 +68,8 @@ func TestListEntries(t *testing.T) {
 
 	arg := ListEntriesParams{
 		AccountID: accFromTestList.ID,
-		Limit: 5,
-		Offset: 5,
+		Limit:     5,
+		Offset:    5,
 	}
 
 	entries, err := testQueries.ListEntries(context.Background(), arg)

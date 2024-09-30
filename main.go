@@ -4,19 +4,20 @@ import (
 	"database/sql"
 	"log"
 
-	_ "github.com/lib/pq"
 	"github.com/Davison003/drr-bank/api"
 	db "github.com/Davison003/drr-bank/db/sqlc"
-)
-
-const (
-	dbDriver = "postgres"
-	dbSource = "postgres://root:1805@localhost:5432/drr_bank?sslmode=disable"
-	serverAddr = "localhost:8080"
+	"github.com/Davison003/drr-bank/util"
+	_ "github.com/lib/pq"
 )
 
 func main() {
-	conn, err := sql.Open(dbDriver, dbSource)
+	config, err := util.LoadConfig("./")
+
+	if err != nil {
+		log.Fatal("Cannot load config file", err)
+	}
+
+	conn, err := sql.Open(config.DBDriver, config.DBSource)
 
 	if err != nil {
 		log.Fatal("Cannot connect to DB: ", err)
@@ -25,7 +26,7 @@ func main() {
 	store := db.NewStore(conn)
 	server := api.NewServer(store)
 
-	err = server.Start(serverAddr)
+	err = server.Start(config.ServerAddress)
 	if err != nil {
 		log.Fatal("Cannot start server: ", err)
 	}

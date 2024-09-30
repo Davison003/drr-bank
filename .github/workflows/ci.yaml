@@ -24,11 +24,14 @@ jobs:
           POSTGRES_PASSWORD: 1805
           POSTGRES_DB: drr_bank
 
+        ports:
+          - 5432:5432
         # Set health checks to wait for postgres INIT
         options: --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
